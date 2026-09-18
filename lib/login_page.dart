@@ -49,14 +49,21 @@ class _LoginPageState extends State<LoginPage> {
             builder: (_) => KarigarHomePage(
               karigarId: result.docs.first.id,
               karigarName: karigar['name'] ?? name,
+              mobile: karigar['mobile'] ?? mobile,
+              factoryNumber:
+                  karigar['factoryNumber'] ?? factoryNumber,
             ),
           ),
         );
       } else {
-        showMessage('માહિતી મળતી નથી');
+        showMessage(
+          'નામ, મોબાઇલ નંબર અથવા કારખાના નંબર મળતા નથી',
+        );
       }
     } catch (e) {
-      showMessage('Online database સાથે જોડાવામાં ભૂલ થઈ');
+      showMessage(
+        'Online database સાથે જોડાવામાં ભૂલ થઈ',
+      );
     }
 
     if (mounted) {
@@ -87,65 +94,92 @@ class _LoginPageState extends State<LoginPage> {
         title: const Text('કારીગર Login'),
         centerTitle: true,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text(
-              'Hira Work Karigar',
-              style: TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.bold,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const SizedBox(height: 50),
+
+              const Icon(
+                Icons.diamond,
+                size: 70,
               ),
-            ),
-            const SizedBox(height: 30),
 
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(
-                labelText: 'કારીગરનું નામ',
-                border: OutlineInputBorder(),
+              const SizedBox(height: 15),
+
+              const Text(
+                'Hira Work Karigar',
+                style: TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
 
-            const SizedBox(height: 15),
+              const SizedBox(height: 35),
 
-            TextField(
-              controller: mobileController,
-              keyboardType: TextInputType.phone,
-              decoration: const InputDecoration(
-                labelText: 'મોબાઇલ નંબર',
-                border: OutlineInputBorder(),
+              TextField(
+                controller: nameController,
+                textCapitalization:
+                    TextCapitalization.words,
+                decoration: const InputDecoration(
+                  labelText: 'કારીગરનું નામ',
+                  prefixIcon: Icon(Icons.person),
+                  border: OutlineInputBorder(),
+                ),
               ),
-            ),
 
-            const SizedBox(height: 15),
+              const SizedBox(height: 15),
 
-            TextField(
-              controller: factoryController,
-              decoration: const InputDecoration(
-                labelText: 'કારખાના નંબર',
-                border: OutlineInputBorder(),
+              TextField(
+                controller: mobileController,
+                keyboardType: TextInputType.phone,
+                maxLength: 10,
+                decoration: const InputDecoration(
+                  labelText: 'મોબાઇલ નંબર',
+                  prefixIcon: Icon(Icons.phone),
+                  border: OutlineInputBorder(),
+                ),
               ),
-            ),
 
-            const SizedBox(height: 25),
+              const SizedBox(height: 15),
 
-            SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: ElevatedButton(
-                onPressed: loading ? null : login,
-                child: loading
-                    ? const CircularProgressIndicator()
-                    : const Text(
-                        'Login',
-                        style: TextStyle(fontSize: 18),
-                      ),
+              TextField(
+                controller: factoryController,
+                decoration: const InputDecoration(
+                  labelText: 'કારખાના નંબર',
+                  prefixIcon: Icon(Icons.business),
+                  border: OutlineInputBorder(),
+                ),
               ),
-            ),
-          ],
+
+              const SizedBox(height: 25),
+
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: loading ? null : login,
+                  child: loading
+                      ? const SizedBox(
+                          width: 25,
+                          height: 25,
+                          child:
+                              CircularProgressIndicator(),
+                        )
+                      : const Text(
+                          'Login',
+                          style: TextStyle(
+                            fontSize: 18,
+                          ),
+                        ),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+            ],
+          ),
         ),
       ),
     );
@@ -155,11 +189,15 @@ class _LoginPageState extends State<LoginPage> {
 class KarigarHomePage extends StatelessWidget {
   final String karigarId;
   final String karigarName;
+  final String mobile;
+  final String factoryNumber;
 
   const KarigarHomePage({
     super.key,
     required this.karigarId,
     required this.karigarName,
+    required this.mobile,
+    required this.factoryNumber,
   });
 
   @override
@@ -167,15 +205,181 @@ class KarigarHomePage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('કારીગર Dashboard'),
+        centerTitle: true,
+        automaticallyImplyLeading: false,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: 'Logout',
+            onPressed: () {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const LoginPage(),
+                ),
+                (route) => false,
+              );
+            },
+          ),
+        ],
       ),
-      body: Center(
-        child: Text(
-          'નમસ્તે $karigarName',
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(18),
+                  child: Row(
+                    children: [
+                      const CircleAvatar(
+                        radius: 30,
+                        child: Icon(
+                          Icons.person,
+                          size: 32,
+                        ),
+                      ),
+                      const SizedBox(width: 15),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment:
+                              CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              karigarName,
+                              style: const TextStyle(
+                                fontSize: 21,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 5),
+                            Text(
+                              'કારખાના નંબર: $factoryNumber',
+                            ),
+                            Text(
+                              'મોબાઇલ: $mobile',
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              DashboardTile(
+                icon: Icons.diamond,
+                title: 'હીરા',
+                subtitle: 'તમારા હીરાની માહિતી',
+                onTap: () {
+                  showComingSoon(context);
+                },
+              ),
+
+              DashboardTile(
+                icon: Icons.assignment,
+                title: 'કામ',
+                subtitle: 'તમારું કામ અને તારીખ',
+                onTap: () {
+                  showComingSoon(context);
+                },
+              ),
+
+              DashboardTile(
+                icon: Icons.currency_rupee,
+                title: 'કુલ કામ / ભાવ',
+                subtitle: 'કામની કુલ રકમ',
+                onTap: () {
+                  showComingSoon(context);
+                },
+              ),
+
+              DashboardTile(
+                icon: Icons.payments,
+                title: 'ઉપાડ',
+                subtitle: 'તમારા ઉપાડની માહિતી',
+                onTap: () {
+                  showComingSoon(context);
+                },
+              ),
+
+              DashboardTile(
+                icon: Icons.history,
+                title: 'તારીખ પ્રમાણે હિસ્ટરી',
+                subtitle: 'કામ અને ઉપાડની હિસ્ટરી',
+                onTap: () {
+                  showComingSoon(context);
+                },
+              ),
+
+              DashboardTile(
+                icon: Icons.picture_as_pdf,
+                title: 'PDF / Share',
+                subtitle: 'તમારી હિસ્ટરીનો PDF',
+                onTap: () {
+                  showComingSoon(context);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void showComingSoon(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'આ વિભાગ online database સાથે આગળ જોડાશે',
+        ),
+      ),
+    );
+  }
+}
+
+class DashboardTile extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const DashboardTile({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 18,
+          vertical: 8,
+        ),
+        leading: CircleAvatar(
+          child: Icon(icon),
+        ),
+        title: Text(
+          title,
           style: const TextStyle(
-            fontSize: 24,
+            fontSize: 17,
             fontWeight: FontWeight.bold,
           ),
         ),
+        subtitle: Text(subtitle),
+        trailing: const Icon(
+          Icons.arrow_forward_ios,
+          size: 18,
+        ),
+        onTap: onTap,
       ),
     );
   }
