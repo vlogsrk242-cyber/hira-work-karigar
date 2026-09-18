@@ -1,0 +1,29 @@
+workflows:
+  android-release:
+    name: Hira Work Karigar APK
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+
+    environment:
+      flutter: stable
+      groups:
+        - firebase_credentials
+
+    scripts:
+      - name: Generate Android project
+        script: |
+          flutter create --platforms=android --org com.hirawork hira_work_karigar
+          cd hira_work_karigar
+
+      - name: Get packages
+        script: |
+          cd hira_work_karigar
+          flutter pub get
+
+      - name: Build APK
+        script: |
+          cd hira_work_karigar
+          flutter build apk --release
+
+    artifacts:
+      - hira_work_karigar/build/app/outputs/flutter-apk/app-release.apk
