@@ -26,25 +26,11 @@ workflows:
           settings = Path("android/settings.gradle.kts")
           text = settings.read_text()
 
-          if 'com.google.gms.google-services' not in text:
-              text = text.replace(
-                  'plugins {',
-                  '''pluginManagement {
-              repositories {
-                  google()
-                  mavenCentral()
-                  gradlePluginPortal()
-              }
-          }
-
-          plugins {'''
-              )
-
+          if 'id("com.google.gms.google-services")' not in text:
               text = text.replace(
                   'plugins {',
                   '''plugins {
-              id("com.google.gms.google-services") version "4.5.0" apply false'''
-                  ,
+              id("com.google.gms.google-services") version "4.5.0" apply false''',
                   1
               )
 
@@ -53,12 +39,11 @@ workflows:
           app = Path("android/app/build.gradle.kts")
           app_text = app.read_text()
 
-          if 'com.google.gms.google-services' not in app_text:
+          if 'id("com.google.gms.google-services")' not in app_text:
               app_text = app_text.replace(
                   'plugins {',
                   '''plugins {
-              id("com.google.gms.google-services")'''
-                  ,
+              id("com.google.gms.google-services")''',
                   1
               )
 
