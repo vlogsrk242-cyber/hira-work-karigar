@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'work_page.dart';
 import 'withdrawal_page.dart';
 import 'total_page.dart';
+import 'history_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -407,7 +408,14 @@ class KarigarHomePage extends StatelessWidget {
                 title: 'તારીખ પ્રમાણે હિસ્ટરી',
                 subtitle: 'કામ અને ઉપાડની હિસ્ટરી',
                 onTap: () {
-                  showComingSoon(context);
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => HistoryPage(
+                        ownerUid: ownerUid,
+                        karigarName: karigarName,
+                      ),
+                    ),
+                  );
                 },
               ),
 
