@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import 'work_page.dart';
+
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -40,7 +42,6 @@ class _LoginPageState extends State<LoginPage> {
       final auth = FirebaseAuth.instance;
       final firestore = FirebaseFirestore.instance;
 
-      // Anonymous login
       if (auth.currentUser == null) {
         await auth.signInAnonymously();
       }
@@ -49,7 +50,10 @@ class _LoginPageState extends State<LoginPage> {
           .collection('karigars')
           .where('name', isEqualTo: name)
           .where('mobile', isEqualTo: mobile)
-          .where('factoryNumber', isEqualTo: factoryNumber)
+          .where(
+            'factoryNumber',
+            isEqualTo: factoryNumber,
+          )
           .limit(1)
           .get();
 
@@ -69,7 +73,8 @@ class _LoginPageState extends State<LoginPage> {
         MaterialPageRoute(
           builder: (_) => KarigarHomePage(
             karigarId: doc.id,
-            ownerUid: karigar['ownerUid']?.toString() ?? '',
+            ownerUid:
+                karigar['ownerUid']?.toString() ?? '',
             karigarName:
                 karigar['name']?.toString() ?? name,
             mobile:
@@ -225,7 +230,8 @@ class _LoginPageState extends State<LoginPage> {
                       ? const SizedBox(
                           width: 25,
                           height: 25,
-                          child: CircularProgressIndicator(
+                          child:
+                              CircularProgressIndicator(
                             strokeWidth: 2,
                           ),
                         )
@@ -351,7 +357,14 @@ class KarigarHomePage extends StatelessWidget {
                 title: 'કામ',
                 subtitle: 'તમારું કામ અને તારીખ',
                 onTap: () {
-                  showComingSoon(context);
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => WorkPage(
+                        ownerUid: ownerUid,
+                        karigarName: karigarName,
+                      ),
+                    ),
+                  );
                 },
               ),
 
