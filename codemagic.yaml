@@ -12,18 +12,19 @@ workflows:
     scripts:
       - name: Generate Android project
         script: |
-          flutter create --platforms=android --org com.hirawork hira_work_karigar
-          cd hira_work_karigar
+          flutter create --platforms=android --org com.hirawork .
+
+      - name: Add Firebase configuration
+        script: |
+          echo "$ANDROID_FIREBASE_JSON" > android/app/google-services.json
 
       - name: Get packages
         script: |
-          cd hira_work_karigar
           flutter pub get
 
       - name: Build APK
         script: |
-          cd hira_work_karigar
           flutter build apk --release
 
     artifacts:
-      - hira_work_karigar/build/app/outputs/flutter-apk/app-release.apk
+      - build/app/outputs/flutter-apk/app-release.apk
