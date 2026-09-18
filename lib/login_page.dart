@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import 'work_page.dart';
+import 'withdrawal_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -382,7 +383,14 @@ class KarigarHomePage extends StatelessWidget {
                 title: 'ઉપાડ',
                 subtitle: 'તમારા ઉપાડની માહિતી',
                 onTap: () {
-                  showComingSoon(context);
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => WithdrawalPage(
+                        ownerUid: ownerUid,
+                        karigarName: karigarName,
+                      ),
+                    ),
+                  );
                 },
               ),
 
