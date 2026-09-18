@@ -17,6 +17,8 @@ class _LoginPageState extends State<LoginPage> {
   bool loading = false;
 
   Future<void> login() async {
+    if (loading) return;
+
     final name = nameController.text.trim();
     final mobile = mobileController.text.trim();
     final factoryNumber = factoryController.text.trim();
@@ -28,76 +30,109 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
+    FocusScope.of(context).unfocus();
+
     setState(() {
       loading = true;
     });
 
     try {
-      // Firebase Authenticationમાં anonymous login
-      if (FirebaseAuth.instance.currentUser == null) {
-        await FirebaseAuth.instance.signInAnonymously();
+      final auth = FirebaseAuth.instance;
+      final firestore = FirebaseFirestore.instance;
+
+      // Anonymous login
+      if (auth.currentUser == null) {
+        await auth.signInAnonymously();
       }
 
-      final result = await FirebaseFirestore.instance
+      final result = await firestore
           .collection('karigars')
           .where('name', isEqualTo: name)
           .where('mobile', isEqualTo: mobile)
-          .where(
-            'factoryNumber',
-            isEqualTo: factoryNumber,
-          )
+          .where('factoryNumber', isEqualTo: factoryNumber)
           .limit(1)
           .get();
 
       if (!mounted) return;
 
-      if (result.docs.isNotEmpty) {
-        final doc = result.docs.first;
-        final karigar = doc.data();
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => KarigarHomePage(
-              karigarId: doc.id,
-              ownerUid:
-                  karigar['ownerUid']?.toString() ?? '',
-              karigarName:
-                  karigar['name']?.toString() ?? name,
-              mobile:
-                  karigar['mobile']?.toString() ?? mobile,
-              factoryNumber:
-                  karigar['factoryNumber']?.toString() ??
-                      factoryNumber,
-            ),
-          ),
-        );
-      } else {
+      if (result.docs.isEmpty) {
         showMessage(
           'નામ, મોબાઇલ નંબર અથવા કારખાના નંબર મળતા નથી',
         );
+        return;
+      }
+
+      final doc = result.docs.first;
+      final karigar = doc.data();
+
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => KarigarHomePage(
+            karigarId: doc.id,
+            ownerUid: karigar['ownerUid']?.toString() ?? '',
+            karigarName:
+                karigar['name']?.toString() ?? name,
+            mobile:
+                karigar['mobile']?.toString() ?? mobile,
+            factoryNumber:
+                karigar['factoryNumber']?.toString() ??
+                    factoryNumber,
+          ),
+        ),
+      );
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+
+      if (e.code == 'operation-not-allowed') {
+        showMessage(
+          'Anonymous Login Firebaseમાં ચાલુ નથી',
+        );
+      } else if (e.code == 'network-request-failed') {
+        showMessage(
+          'Internet connection તપાસો',
+        );
+      } else {
+        showMessage(
+          'Login કરવામાં ભૂલ થઈ',
+        );
+      }
+    } on FirebaseException catch (e) {
+      if (!mounted) return;
+
+      if (e.code == 'permission-denied') {
+        showMessage(
+          'Firebase Permission બંધ છે',
+        );
+      } else {
+        showMessage(
+          'કારીગરની માહિતી મેળવવામાં ભૂલ થઈ',
+        );
       }
     } catch (e) {
+      if (!mounted) return;
+
       showMessage(
         'Login કરવામાં ભૂલ થઈ',
       );
-    }
-
-    if (mounted) {
-      setState(() {
-        loading = false;
-      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          loading = false;
+        });
+      }
     }
   }
 
   void showMessage(String message) {
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-      ),
-    );
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+        ),
+      );
   }
 
   @override
@@ -143,6 +178,7 @@ class _LoginPageState extends State<LoginPage> {
                 controller: nameController,
                 textCapitalization:
                     TextCapitalization.words,
+                textInputAction: TextInputAction.next,
                 decoration: const InputDecoration(
                   labelText: 'કારીગરનું નામ',
                   prefixIcon: Icon(Icons.person),
@@ -155,11 +191,13 @@ class _LoginPageState extends State<LoginPage> {
               TextField(
                 controller: mobileController,
                 keyboardType: TextInputType.phone,
+                textInputAction: TextInputAction.next,
                 maxLength: 10,
                 decoration: const InputDecoration(
                   labelText: 'મોબાઇલ નંબર',
                   prefixIcon: Icon(Icons.phone),
                   border: OutlineInputBorder(),
+                  counterText: '',
                 ),
               ),
 
@@ -167,6 +205,8 @@ class _LoginPageState extends State<LoginPage> {
 
               TextField(
                 controller: factoryController,
+                textInputAction: TextInputAction.done,
+                onSubmitted: (_) => login(),
                 decoration: const InputDecoration(
                   labelText: 'કારખાના નંબર',
                   prefixIcon: Icon(Icons.business),
@@ -185,11 +225,12 @@ class _LoginPageState extends State<LoginPage> {
                       ? const SizedBox(
                           width: 25,
                           height: 25,
-                          child:
-                              CircularProgressIndicator(),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                          ),
                         )
                       : const Text(
-                          'Login',
+                          'LOGIN',
                           style: TextStyle(
                             fontSize: 18,
                           ),
@@ -238,8 +279,7 @@ class KarigarHomePage extends StatelessWidget {
 
               if (!context.mounted) return;
 
-              Navigator.pushAndRemoveUntil(
-                context,
+              Navigator.of(context).pushAndRemoveUntil(
                 MaterialPageRoute(
                   builder: (_) => const LoginPage(),
                 ),
@@ -358,13 +398,15 @@ class KarigarHomePage extends StatelessWidget {
   }
 
   void showComingSoon(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'આ વિભાગ આગળ Firebase database સાથે જોડાશે',
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        const SnackBar(
+          content: Text(
+            'આ વિભાગ આગળ Firebase database સાથે જોડાશે',
+          ),
         ),
-      ),
-    );
+      );
   }
 }
 
