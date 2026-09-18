@@ -418,15 +418,6 @@ class KarigarHomePage extends StatelessWidget {
                   );
                 },
               ),
-
-              DashboardTile(
-                icon: Icons.picture_as_pdf,
-                title: 'PDF / Share',
-                subtitle: 'તમારી હિસ્ટરીનો PDF',
-                onTap: () {
-                  showComingSoon(context);
-                },
-              ),
             ],
           ),
         ),
