@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'work_page.dart';
 import 'withdrawal_page.dart';
+import 'total_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -374,7 +375,14 @@ class KarigarHomePage extends StatelessWidget {
                 title: 'કુલ કામ / ભાવ',
                 subtitle: 'કામની કુલ રકમ',
                 onTap: () {
-                  showComingSoon(context);
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => TotalPage(
+                        ownerUid: ownerUid,
+                        karigarName: karigarName,
+                      ),
+                    ),
+                  );
                 },
               ),
 
