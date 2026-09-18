@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class LoginPage extends StatefulWidget {
@@ -20,7 +21,9 @@ class _LoginPageState extends State<LoginPage> {
     final mobile = mobileController.text.trim();
     final factoryNumber = factoryController.text.trim();
 
-    if (name.isEmpty || mobile.isEmpty || factoryNumber.isEmpty) {
+    if (name.isEmpty ||
+        mobile.isEmpty ||
+        factoryNumber.isEmpty) {
       showMessage('બધી માહિતી ભરો');
       return;
     }
@@ -30,28 +33,42 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     try {
+      // Firebase Authenticationમાં anonymous login
+      if (FirebaseAuth.instance.currentUser == null) {
+        await FirebaseAuth.instance.signInAnonymously();
+      }
+
       final result = await FirebaseFirestore.instance
           .collection('karigars')
           .where('name', isEqualTo: name)
           .where('mobile', isEqualTo: mobile)
-          .where('factoryNumber', isEqualTo: factoryNumber)
+          .where(
+            'factoryNumber',
+            isEqualTo: factoryNumber,
+          )
           .limit(1)
           .get();
 
       if (!mounted) return;
 
       if (result.docs.isNotEmpty) {
-        final karigar = result.docs.first.data();
+        final doc = result.docs.first;
+        final karigar = doc.data();
 
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
             builder: (_) => KarigarHomePage(
-              karigarId: result.docs.first.id,
-              karigarName: karigar['name'] ?? name,
-              mobile: karigar['mobile'] ?? mobile,
+              karigarId: doc.id,
+              ownerUid:
+                  karigar['ownerUid']?.toString() ?? '',
+              karigarName:
+                  karigar['name']?.toString() ?? name,
+              mobile:
+                  karigar['mobile']?.toString() ?? mobile,
               factoryNumber:
-                  karigar['factoryNumber'] ?? factoryNumber,
+                  karigar['factoryNumber']?.toString() ??
+                      factoryNumber,
             ),
           ),
         );
@@ -62,7 +79,7 @@ class _LoginPageState extends State<LoginPage> {
       }
     } catch (e) {
       showMessage(
-        'Online database સાથે જોડાવામાં ભૂલ થઈ',
+        'Login કરવામાં ભૂલ થઈ',
       );
     }
 
@@ -74,8 +91,12 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void showMessage(String message) {
+    if (!mounted) return;
+
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
+      SnackBar(
+        content: Text(message),
+      ),
     );
   }
 
@@ -98,7 +119,6 @@ class _LoginPageState extends State<LoginPage> {
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const SizedBox(height: 50),
 
@@ -188,6 +208,7 @@ class _LoginPageState extends State<LoginPage> {
 
 class KarigarHomePage extends StatelessWidget {
   final String karigarId;
+  final String ownerUid;
   final String karigarName;
   final String mobile;
   final String factoryNumber;
@@ -195,6 +216,7 @@ class KarigarHomePage extends StatelessWidget {
   const KarigarHomePage({
     super.key,
     required this.karigarId,
+    required this.ownerUid,
     required this.karigarName,
     required this.mobile,
     required this.factoryNumber,
@@ -211,7 +233,11 @@ class KarigarHomePage extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.logout),
             tooltip: 'Logout',
-            onPressed: () {
+            onPressed: () async {
+              await FirebaseAuth.instance.signOut();
+
+              if (!context.mounted) return;
+
               Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(
@@ -250,7 +276,8 @@ class KarigarHomePage extends StatelessWidget {
                               karigarName,
                               style: const TextStyle(
                                 fontSize: 21,
-                                fontWeight: FontWeight.bold,
+                                fontWeight:
+                                    FontWeight.bold,
                               ),
                             ),
                             const SizedBox(height: 5),
@@ -334,7 +361,7 @@ class KarigarHomePage extends StatelessWidget {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text(
-          'આ વિભાગ online database સાથે આગળ જોડાશે',
+          'આ વિભાગ આગળ Firebase database સાથે જોડાશે',
         ),
       ),
     );
@@ -360,7 +387,8 @@ class DashboardTile extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(
+        contentPadding:
+            const EdgeInsets.symmetric(
           horizontal: 18,
           vertical: 8,
         ),
