@@ -6,8 +6,6 @@ workflows:
 
     environment:
       flutter: stable
-      groups:
-        - firebase_credentials
 
     scripts:
       - name: Generate Android project
@@ -16,7 +14,7 @@ workflows:
 
       - name: Add Firebase configuration
         script: |
-          echo "$ANDROID_FIREBASE_JSON" > android/app/google-services.json
+          cp google-services.json android/app/google-services.json
 
       - name: Configure Google Services plugin
         script: |
